@@ -1,0 +1,21 @@
+# Dependencies
+node_modules/
+__pycache__/
+*.pyc
+.pytest_cache/
+.env
+
+# Databases and Local Uploads
+database/*.db
+uploads/
+
+# Environments
+.venv/
+venv/
+env/
+dist/
+
+# Logs and OS
+*.log
+.DS_Store
+Thumbs.db
