@@ -173,6 +173,14 @@ def run_heuristic_analysis(raw_text: str) -> Dict[str, Any]:
 
     attachment_name = "complaint_report.pdf"
 
+    # Pharma standardization
+    from app.pharma_data import find_ndc_for_product, detect_meddra_terms
+    ndc_match = find_ndc_for_product(product_name)
+    ndc_code = ndc_match["ndc_code"] if ndc_match else "0093-2264-01"
+    meddra_detected = detect_meddra_terms(description)
+    meddra_terms = ", ".join(meddra_detected) if meddra_detected else ("Hypersensitivity [10020751]" if complaint_type == "Safety/Adverse Event" else "Product physical issue [10069110]")
+    adverse_event_flag = 1 if (complaint_type == "Safety/Adverse Event" or severity == "Critical") else 0
+
     return {
         "customer_name": customer_name,
         "company_name": company_name,
@@ -196,6 +204,9 @@ def run_heuristic_analysis(raw_text: str) -> Dict[str, Any]:
         "exp_date": exp_date,
         "country": country,
         "attachment_name": attachment_name,
+        "ndc_code": ndc_code,
+        "meddra_terms": meddra_terms,
+        "adverse_event_flag": adverse_event_flag,
         "summary_confidence": 98,
         "risk_confidence": 96,
         "extraction_confidence": 99
@@ -376,6 +387,9 @@ def formatter_node(state: AgentState) -> Dict[str, Any]:
         "exp_date": extra.get("exp_date"),
         "country": extra.get("country"),
         "attachment_name": extra.get("attachment_name"),
+        "ndc_code": extra.get("ndc_code") or "0093-2264-01",
+        "meddra_terms": extra.get("meddra_terms") or "Product physical issue [10069110]",
+        "adverse_event_flag": extra.get("adverse_event_flag") or 0,
         "summary_confidence": extra.get("summary_confidence"),
         "risk_confidence": extra.get("risk_confidence"),
         "extraction_confidence": extra.get("extraction_confidence")

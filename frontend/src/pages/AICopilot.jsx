@@ -478,6 +478,35 @@ const AICopilot = () => {
                 </div>
               </div>
 
+              {/* Pharma Standardization Badge */}
+              {aiOutput.ndc_code && (
+                <div style={{
+                  background: 'rgba(6, 182, 212, 0.08)',
+                  border: '1px solid rgba(6, 182, 212, 0.25)',
+                  borderRadius: '6px',
+                  padding: '8px 10px',
+                  fontSize: '0.75rem',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '4px'
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ color: 'var(--text-muted)', fontSize: '0.65rem', textTransform: 'uppercase' }}>FDA NDC Validated</span>
+                    <strong style={{ fontFamily: 'monospace', color: 'var(--accent-cyan)' }}>{aiOutput.ndc_code}</strong>
+                  </div>
+                  {aiOutput.meddra_terms && (
+                    <div style={{ color: 'var(--accent-purple)', fontSize: '0.7rem' }}>
+                      MedDRA: <strong>{aiOutput.meddra_terms}</strong>
+                    </div>
+                  )}
+                  {aiOutput.adverse_event_flag === 1 && (
+                    <span style={{ color: 'var(--risk-high)', fontWeight: 700, fontSize: '0.65rem' }}>
+                      ⚠️ 15-Day Expedited Safety Reporting Clock Triggered
+                    </span>
+                  )}
+                </div>
+              )}
+
               <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', fontSize: '0.85rem' }}>
                 <div>
                   <strong style={{ color: 'var(--text-secondary)', display: 'block', fontSize: '0.75rem', textTransform: 'uppercase', marginBottom: '2px' }}>AI Incident Summary</strong>

@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { useLocation, Link } from 'react-router-dom';
-import { Cpu, Server, Sparkles, ChevronRight } from 'lucide-react';
+import { useSelector } from 'react-redux';
+import { Cpu, Server, Sparkles, ChevronRight, UserCheck, Shield } from 'lucide-react';
 import axios from 'axios';
 
 const Navbar = () => {
   const location = useLocation();
+  const { user } = useSelector((state) => state.auth);
   const [apiStatus, setApiStatus] = useState('connecting');
   const [hasKey, setHasKey] = useState(false);
   const [provider, setProvider] = useState('Groq');
@@ -167,6 +169,33 @@ const Navbar = () => {
           }} className="pulse-light" />
           LangGraph Running
         </div>
+
+        {/* User Identity & Role Chip (Pillar 1 RBAC) */}
+        {user && (
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            padding: '4px 10px',
+            borderRadius: '12px',
+            background: 'rgba(255, 255, 255, 0.05)',
+            border: '1px solid var(--border-glass)',
+            fontSize: '0.75rem',
+            fontWeight: 600
+          }}>
+            <UserCheck size={13} color="var(--accent-cyan)" />
+            <span style={{ color: 'var(--text-primary)' }}>{user.full_name || user.username}</span>
+            <span style={{
+              background: 'rgba(6, 182, 212, 0.15)',
+              color: 'var(--accent-cyan)',
+              padding: '1px 6px',
+              borderRadius: '4px',
+              fontSize: '0.65rem'
+            }}>
+              {user.role}
+            </span>
+          </div>
+        )}
 
         {/* Server Status */}
         <div style={{

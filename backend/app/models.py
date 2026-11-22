@@ -9,12 +9,14 @@ class User(Base):
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String, unique=True, index=True, nullable=False)
     hashed_password = Column(String, nullable=False)
-    role = Column(String, default="User")  # Admin, Investigator, QualityAssurance, User
+    role = Column(String, default="QualityAssurance")  # Admin, QualityAssurance, Investigator, IntakeSpecialist, Auditor
     full_name = Column(String, nullable=True)
+    email = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
 
     # Relationships
     audit_logs = relationship("AuditLog", back_populates="user")
+    electronic_signatures = relationship("ElectronicSignature", back_populates="user")
 
 class Complaint(Base):
     __tablename__ = "complaints"
@@ -44,6 +46,23 @@ class Complaint(Base):
     exp_date = Column(String, nullable=True)
     country = Column(String, nullable=True)
     attachment_name = Column(String, nullable=True)
+
+    # Regulatory & MedDRA Fields (Pillar 2 & 4)
+    ndc_code = Column(String, nullable=True)
+    meddra_terms = Column(String, nullable=True)
+    adverse_event_flag = Column(Integer, default=0)  # 1 for Adverse Event (requires 15-day report), 0 for standard defect
+    patient_age = Column(String, nullable=True)
+    patient_gender = Column(String, nullable=True)
+
+    # Structured Root Cause Analysis & CAPA Effectiveness (Pillar 3)
+    five_whys_json = Column(Text, nullable=True)  # JSON-encoded array of 5-Whys
+    fishbone_json = Column(Text, nullable=True)   # JSON-encoded 6M factors
+    capa_due_date = Column(String, nullable=True)
+    capa_owner = Column(String, nullable=True)
+    effectiveness_check_date = Column(String, nullable=True)
+    effectiveness_criteria = Column(Text, nullable=True)
+    effectiveness_status = Column(String, default="PENDING")  # PENDING, VERIFIED_EFFECTIVE, INEFFECTIVE_REOPENED
+
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
 
@@ -51,6 +70,7 @@ class Complaint(Base):
     documents = relationship("ComplaintDocument", back_populates="complaint", cascade="all, delete-orphan")
     risk_assessments = relationship("RiskAssessment", back_populates="complaint", cascade="all, delete-orphan")
     audit_logs = relationship("AuditLog", back_populates="complaint", cascade="all, delete-orphan")
+    electronic_signatures = relationship("ElectronicSignature", back_populates="complaint", cascade="all, delete-orphan")
 
 class ComplaintDocument(Base):
     __tablename__ = "complaint_documents"
@@ -85,10 +105,30 @@ class AuditLog(Base):
     id = Column(Integer, primary_key=True, index=True)
     complaint_id = Column(Integer, ForeignKey("complaints.id", ondelete="CASCADE"), nullable=True)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
-    action = Column(String, nullable=False)       # Create, Update, Delete, Risk Assessed, CAPA Suggestion, Closed
+    action = Column(String, nullable=False)       # Create, Update, Delete, Risk Assessed, CAPA Suggestion, Closed, Electronic Signature
     description = Column(Text, nullable=True)
+    signature_hash = Column(String, nullable=True)
     timestamp = Column(DateTime, default=datetime.datetime.utcnow)
 
     # Relationships
     complaint = relationship("Complaint", back_populates="audit_logs")
     user = relationship("User", back_populates="audit_logs")
+
+class ElectronicSignature(Base):
+    __tablename__ = "electronic_signatures"
+
+    id = Column(Integer, primary_key=True, index=True)
+    complaint_id = Column(Integer, ForeignKey("complaints.id", ondelete="CASCADE"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    signer_name = Column(String, nullable=False)
+    signer_role = Column(String, nullable=False)
+    action = Column(String, nullable=False)
+    status_from = Column(String, nullable=False)
+    status_to = Column(String, nullable=False)
+    meaning_of_signature = Column(String, nullable=False)
+    signature_hash = Column(String, nullable=False)
+    timestamp = Column(DateTime, default=datetime.datetime.utcnow)
+
+    # Relationships
+    complaint = relationship("Complaint", back_populates="electronic_signatures")
+    user = relationship("User", back_populates="electronic_signatures")

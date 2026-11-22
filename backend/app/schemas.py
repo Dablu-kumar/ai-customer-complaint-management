@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 from datetime import datetime
 
 # --- Auth Schemas ---
@@ -11,13 +11,15 @@ class UserCreate(BaseModel):
     username: str
     password: str
     full_name: Optional[str] = None
-    role: Optional[str] = "User"
+    role: Optional[str] = "QualityAssurance"
+    email: Optional[str] = None
 
 class UserResponse(BaseModel):
     id: int
     username: str
     role: str
     full_name: Optional[str]
+    email: Optional[str] = None
     created_at: datetime
 
     class Config:
@@ -61,6 +63,29 @@ class RiskAssessmentResponse(BaseModel):
     class Config:
         from_attributes = True
 
+# --- Electronic Signature Schemas (Pillar 1) ---
+class ElectronicSignatureCreate(BaseModel):
+    password: str
+    meaning_of_signature: str
+    target_status: str
+    notes: Optional[str] = None
+
+class ElectronicSignatureResponse(BaseModel):
+    id: int
+    complaint_id: int
+    user_id: Optional[int]
+    signer_name: str
+    signer_role: str
+    action: str
+    status_from: str
+    status_to: str
+    meaning_of_signature: str
+    signature_hash: str
+    timestamp: datetime
+
+    class Config:
+        from_attributes = True
+
 # --- Audit Log Schemas ---
 class AuditLogResponse(BaseModel):
     id: int
@@ -68,11 +93,27 @@ class AuditLogResponse(BaseModel):
     user_id: Optional[int]
     action: str
     description: Optional[str]
+    signature_hash: Optional[str] = None
     timestamp: datetime
     user_name: Optional[str] = None
 
     class Config:
         from_attributes = True
+
+# --- Structured RCA & CAPA Schemas (Pillar 3) ---
+class RCASaveRequest(BaseModel):
+    five_whys_json: Optional[str] = None
+    fishbone_json: Optional[str] = None
+    root_cause: Optional[str] = None
+    suggested_investigation: Optional[str] = None
+
+class CAPAEffectivenessUpdate(BaseModel):
+    capa_due_date: Optional[str] = None
+    capa_owner: Optional[str] = None
+    effectiveness_check_date: Optional[str] = None
+    effectiveness_criteria: Optional[str] = None
+    effectiveness_status: Optional[str] = "PENDING"
+    capa: Optional[str] = None
 
 # --- Complaint Schemas ---
 class ComplaintCreate(BaseModel):
@@ -100,6 +141,19 @@ class ComplaintCreate(BaseModel):
     exp_date: Optional[str] = None
     country: Optional[str] = None
     attachment_name: Optional[str] = None
+    # Medical & RCA fields
+    ndc_code: Optional[str] = None
+    meddra_terms: Optional[str] = None
+    adverse_event_flag: Optional[int] = 0
+    patient_age: Optional[str] = None
+    patient_gender: Optional[str] = None
+    five_whys_json: Optional[str] = None
+    fishbone_json: Optional[str] = None
+    capa_due_date: Optional[str] = None
+    capa_owner: Optional[str] = None
+    effectiveness_check_date: Optional[str] = None
+    effectiveness_criteria: Optional[str] = None
+    effectiveness_status: Optional[str] = "PENDING"
 
 class ComplaintUpdate(BaseModel):
     customer_name: Optional[str] = None
@@ -123,6 +177,18 @@ class ComplaintUpdate(BaseModel):
     exp_date: Optional[str] = None
     country: Optional[str] = None
     attachment_name: Optional[str] = None
+    ndc_code: Optional[str] = None
+    meddra_terms: Optional[str] = None
+    adverse_event_flag: Optional[int] = None
+    patient_age: Optional[str] = None
+    patient_gender: Optional[str] = None
+    five_whys_json: Optional[str] = None
+    fishbone_json: Optional[str] = None
+    capa_due_date: Optional[str] = None
+    capa_owner: Optional[str] = None
+    effectiveness_check_date: Optional[str] = None
+    effectiveness_criteria: Optional[str] = None
+    effectiveness_status: Optional[str] = None
 
 class ComplaintResponse(BaseModel):
     id: int
@@ -150,12 +216,25 @@ class ComplaintResponse(BaseModel):
     exp_date: Optional[str] = None
     country: Optional[str] = None
     attachment_name: Optional[str] = None
+    ndc_code: Optional[str] = None
+    meddra_terms: Optional[str] = None
+    adverse_event_flag: Optional[int] = 0
+    patient_age: Optional[str] = None
+    patient_gender: Optional[str] = None
+    five_whys_json: Optional[str] = None
+    fishbone_json: Optional[str] = None
+    capa_due_date: Optional[str] = None
+    capa_owner: Optional[str] = None
+    effectiveness_check_date: Optional[str] = None
+    effectiveness_criteria: Optional[str] = None
+    effectiveness_status: Optional[str] = "PENDING"
     duplicate_count: Optional[int] = 0
     created_at: datetime
     updated_at: datetime
     documents: List[DocumentResponse] = []
     risk_assessments: List[RiskAssessmentResponse] = []
     audit_logs: List[AuditLogResponse] = []
+    electronic_signatures: List[ElectronicSignatureResponse] = []
 
     class Config:
         from_attributes = True
@@ -214,6 +293,10 @@ class AIExtractionResult(BaseModel):
     summary_confidence: Optional[int] = 98
     risk_confidence: Optional[int] = 96
     extraction_confidence: Optional[int] = 99
+    # Standardized pharma fields
+    ndc_code: Optional[str] = None
+    meddra_terms: Optional[str] = None
+    adverse_event_flag: Optional[int] = 0
 
 # --- Settings Schemas ---
 class SettingsResponse(BaseModel):

@@ -79,6 +79,54 @@ export const updateComplaint = createAsyncThunk(
   }
 );
 
+export const signStatusTransition = createAsyncThunk(
+  'complaints/signStatus',
+  async ({ id, signData }, { dispatch, rejectWithValue }) => {
+    try {
+      const response = await axios.post(`${API_URL}/complaints/${id}/sign-status`, signData, getHeaders());
+      dispatch(showNotification({ 
+        message: `Status advanced to ${signData.target_status} with verified 21 CFR Part 11 Electronic Signature!`, 
+        type: 'success' 
+      }));
+      return response.data;
+    } catch (error) {
+      const errorMsg = error.response?.data?.detail || 'Electronic Signature verification failed';
+      dispatch(showNotification({ message: errorMsg, type: 'error' }));
+      return rejectWithValue(errorMsg);
+    }
+  }
+);
+
+export const saveRCA = createAsyncThunk(
+  'complaints/saveRCA',
+  async ({ id, rcaData }, { dispatch, rejectWithValue }) => {
+    try {
+      const response = await axios.put(`${API_URL}/complaints/${id}/rca`, rcaData, getHeaders());
+      dispatch(showNotification({ message: 'Root Cause Analysis saved successfully', type: 'success' }));
+      return response.data;
+    } catch (error) {
+      const errorMsg = error.response?.data?.detail || 'Failed to save RCA';
+      dispatch(showNotification({ message: errorMsg, type: 'error' }));
+      return rejectWithValue(errorMsg);
+    }
+  }
+);
+
+export const updateCAPAEffectiveness = createAsyncThunk(
+  'complaints/updateCAPAEffectiveness',
+  async ({ id, capaData }, { dispatch, rejectWithValue }) => {
+    try {
+      const response = await axios.put(`${API_URL}/complaints/${id}/capa-effectiveness`, capaData, getHeaders());
+      dispatch(showNotification({ message: 'CAPA Effectiveness plan updated', type: 'success' }));
+      return response.data;
+    } catch (error) {
+      const errorMsg = error.response?.data?.detail || 'Failed to update CAPA effectiveness';
+      dispatch(showNotification({ message: errorMsg, type: 'error' }));
+      return rejectWithValue(errorMsg);
+    }
+  }
+);
+
 export const deleteComplaint = createAsyncThunk(
   'complaints/delete',
   async (id, { dispatch, rejectWithValue }) => {
@@ -156,12 +204,31 @@ const complaintSlice = createSlice({
       .addCase(createComplaint.fulfilled, (state, action) => {
         state.list.unshift(action.payload);
       })
-      // Update
+      // Update / Sign / RCA / CAPA
       .addCase(updateComplaint.fulfilled, (state, action) => {
         const index = state.list.findIndex(c => c.id === action.payload.id);
         if (index !== -1) {
           state.list[index] = action.payload;
         }
+        if (state.selectedComplaint && state.selectedComplaint.id === action.payload.id) {
+          state.selectedComplaint = action.payload;
+        }
+      })
+      .addCase(signStatusTransition.fulfilled, (state, action) => {
+        const index = state.list.findIndex(c => c.id === action.payload.id);
+        if (index !== -1) {
+          state.list[index] = action.payload;
+        }
+        if (state.selectedComplaint && state.selectedComplaint.id === action.payload.id) {
+          state.selectedComplaint = action.payload;
+        }
+      })
+      .addCase(saveRCA.fulfilled, (state, action) => {
+        if (state.selectedComplaint && state.selectedComplaint.id === action.payload.id) {
+          state.selectedComplaint = action.payload;
+        }
+      })
+      .addCase(updateCAPAEffectiveness.fulfilled, (state, action) => {
         if (state.selectedComplaint && state.selectedComplaint.id === action.payload.id) {
           state.selectedComplaint = action.payload;
         }
@@ -177,7 +244,6 @@ const complaintSlice = createSlice({
       .addCase(submitRiskAssessment.fulfilled, (state, action) => {
         if (state.selectedComplaint && state.selectedComplaint.id === action.payload.id) {
           state.selectedComplaint.risk_assessments.unshift(action.payload.assessment);
-          // Let's refetch or update risk variables
           const r = action.payload.assessment;
           state.selectedComplaint.risk_level = r.risk_priority_number >= 15 ? 'High' : (r.risk_priority_number >= 8 ? 'Medium' : 'Low');
           state.selectedComplaint.severity = r.severity_score >= 4 ? (r.severity_score === 5 ? 'Critical' : 'Major') : 'Minor';
